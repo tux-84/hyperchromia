@@ -1,17 +1,108 @@
 name: PR Check
 on:
   pull_request:
-    branches: [master]
+    branches: [master, develop]
 permissions:
   contents: read
 jobs:
-  shellcheck:
+  shellcheck-gate:
     runs-on: ubuntu-latest
     env:
       SHELLCHECK_OPTS: -x
     steps:
       - uses: actions/checkout@v7
       - uses: ludeeus/action-shellcheck@2.0.0
+  code-quality:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: reviewdog/action-shellcheck@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-review
+          fail_level: any
+          shellcheck_flags: -x
+          pattern: |
+            *.sh
+            hy
+            initramfs-init
+            hyperchromia-init-overlay
+      - uses: reviewdog/action-yamllint@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-review
+          fail_level: error
+          yamllint_flags: -c .yamllint.yml .
+      - name: Post code quality summary
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          SC_URL="https://github.com/koalaman/shellcheck/releases/download"
+          SC_VER="v0.11.0"
+          curl -sL "$SC_URL/$SC_VER/shellcheck-$SC_VER.linux.x86_64.tar.xz" \
+            | tar -xJ "shellcheck-$SC_VER/shellcheck" -O > /tmp/sc
+          chmod +x /tmp/sc
+          pip install -q yamllint
+          FILES=$(find . -path ./.git -prune -o -type f \
+            \( -name "*.sh" -o -name "hy" -o -name "initramfs-init" \
+               -o -name "hyperchromia-init-overlay" \) -print)
+          SC_JSON=$(/tmp/sc -x -f json $FILES 2>/dev/null || true)
+          SC_COUNT=$(echo "$SC_JSON" | python3 -c \
+            "import json,sys; print(len(json.load(sys.stdin)))")
+          YL_OUT=$(yamllint -c .yamllint.yml . 2>&1 || true)
+          YL_COUNT=$(echo "$YL_OUT" | grep -cE "error|warning" || true)
+          MARKER="<!-- hyperchromia-code-quality-report -->"
+          if [ "$SC_COUNT" = "0" ] && [ "$YL_COUNT" = "0" ]; then
+            STATUS="All clear -- 0 shellcheck issues, 0 yamllint issues."
+          else
+            STATUS="$SC_COUNT shellcheck + $YL_COUNT yamllint issue(s) found."
+          fi
+          BODY=$(printf '%s\n## Code quality report\n%s' "$MARKER" "$STATUS")
+          PR=${{ github.event.pull_request.number }}
+          REPO=${{ github.repository }}
+          EXISTING=$(gh api "repos/$REPO/issues/$PR/comments" \
+            --jq ".[] | select(.body | startswith(\"$MARKER\")) | .id" \
+            | head -1)
+          if [ -n "$EXISTING" ]; then
+            gh api "repos/$REPO/issues/comments/$EXISTING" -X PATCH \
+              -f body="$BODY"
+          else
+            gh api "repos/$REPO/issues/$PR/comments" -X POST \
+              -f body="$BODY"
+          fi
+  code-scanning:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v7
+      - run: |
+          SC_URL="https://github.com/koalaman/shellcheck/releases/download"
+          SC_VER="v0.11.0"
+          curl -sL "$SC_URL/$SC_VER/shellcheck-$SC_VER.linux.x86_64.tar.xz" \
+            | tar -xJ "shellcheck-$SC_VER/shellcheck" -O \
+            > /usr/local/bin/shellcheck-pinned
+          chmod +x /usr/local/bin/shellcheck-pinned
+      - run: |
+          find . -path ./.git -prune -o -type f \
+            \( -name "*.sh" -o -name "hy" -o -name "initramfs-init" \
+               -o -name "hyperchromia-init-overlay" \) -print0 \
+            | xargs -0 shellcheck-pinned -x -f json \
+            > shellcheck-results.json || true
+      - run: |
+          SARIF_URL="https://github.com/psastras/sarif-rs/releases/download"
+          SARIF_BIN="shellcheck-sarif-v0.8.0/shellcheck-sarif-x86_64-unknown-linux-gnu"
+          curl -sL "$SARIF_URL/$SARIF_BIN" -o shellcheck-sarif
+          chmod +x shellcheck-sarif
+          ./shellcheck-sarif < shellcheck-results.json > results.sarif
+      - uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: results.sarif
   commitlint:
     runs-on: ubuntu-latest
     steps:
@@ -19,7 +110,7 @@ jobs:
         with:
           fetch-depth: 0
       - run: pip install commitizen
-      - run: cz check --rev-range origin/master..HEAD
+      - run: cz check --rev-range origin/${{ github.base_ref }}..HEAD
   trufflehog:
     runs-on: ubuntu-latest
     steps:

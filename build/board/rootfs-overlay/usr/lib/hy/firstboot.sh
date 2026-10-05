@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC1091,SC1090
 HY_LIB_DIR="${HY_LIB_DIR:-/usr/lib/hy}"
 source "$HY_LIB_DIR/common.sh"
 source "$HY_LIB_DIR/netconfig.sh"

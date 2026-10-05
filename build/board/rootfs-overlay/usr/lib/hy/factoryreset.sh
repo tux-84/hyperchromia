@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC1091,SC2153
 HY_LIB_DIR="${HY_LIB_DIR:-/usr/lib/hy}"
 source "$HY_LIB_DIR/common.sh"
 
@@ -45,7 +46,7 @@ EOF
     for d in etc var/lib; do
         slug=$(echo "$d" | tr / -)
         upper="$HY_OVERLAY_BASE/$slug/upper"
-        [ -d "$upper" ] && rm -rf "$upper"/.[!.]* "$upper"/..?* "$upper"/* 2>/dev/null
+        [ -d "$upper" ] && rm -rf "${upper:?}"/.[!.]* "${upper:?}"/..?* "${upper:?}"/* 2>/dev/null
     done
 
     sync
