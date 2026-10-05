@@ -1,0 +1,13 @@
+[Unit]
+Description=HyperChromia first-boot setup (locale/network/password/mqtt)
+After=hyperchromia-seed-data.service hyperchromia-installer-check.service
+Before=hyperhdr.service hyperchromia-mqtt.service getty@tty1.service serial-getty@ttyS0.service
+ConditionPathExists=!/data/hyperchromia/state/firstboot-done
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c 'source /usr/lib/hy/common.sh; hy_booted_from_removable_media && exit 0; source /usr/lib/hy/firstboot.sh && hy_cmd_firstboot'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
