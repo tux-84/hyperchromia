@@ -1,0 +1,51 @@
+#!/bin/busybox sh
+export PATH=/bin
+
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mount -t devtmpfs devtmpfs /dev
+
+for m in sd_mod usb-storage uas \
+         libahci libahci_platform ahci ahci_platform ata_piix ata_generic \
+         sata_mv sata_nv sata_promise sata_sil sata_sil24 sata_sis sata_svw sata_uli sata_via sata_vsc \
+         pata_ali pata_amd pata_atiixp pata_jmicron pata_marvell pata_oldpiix pata_sch pata_sil680 pata_sis pata_via \
+         sdhci sdhci-pci sdhci-acpi sdhci-pltfm cqhci mmc_block \
+         nvme-core nvme; do
+    insmod "/lib/modules/${m}.ko" 2>/dev/null
+done
+
+CMDLINE="$(cat /proc/cmdline)"
+root_label="rootA"
+init_path="/sbin/hyperchromia-init-overlay"
+for arg in $CMDLINE; do
+    case "$arg" in
+        root=PARTLABEL=*) root_label="${arg#root=PARTLABEL=}" ;;
+        init=*) init_path="${arg#init=}" ;;
+    esac
+done
+
+root_dev=""
+i=0
+while [ "$i" -lt 15 ]; do
+    for u in /sys/class/block/*/uevent; do
+        if grep -q "^PARTNAME=${root_label}$" "$u" 2>/dev/null; then
+            root_dev="$(basename "$(dirname "$u")")"
+            break
+        fi
+    done
+    [ -n "$root_dev" ] && break
+    sleep 1
+    i=$((i + 1))
+done
+
+if [ -z "$root_dev" ]; then
+    echo "hyperchromia-initramfs: could not find partition PARTLABEL=${root_label}" > /dev/console
+    exec /bin/sh
+fi
+
+mkdir -p /mnt/root
+mount -t squashfs -o ro "/dev/${root_dev}" /mnt/root
+
+umount /proc
+umount /sys
+exec switch_root /mnt/root "$init_path"
