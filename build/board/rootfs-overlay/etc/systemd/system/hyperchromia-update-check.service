@@ -1,0 +1,13 @@
+[Unit]
+Description=Check for and apply an attached HyperChromia update.img
+After=systemd-udevd.service local-fs.target
+Before=hyperhdr.service hyperchromia-seed-data.service getty@tty1.service serial-getty@ttyS0.service
+
+[Service]
+Type=oneshot
+ExecStartPre=/usr/bin/udevadm settle --timeout=15
+ExecStart=/usr/lib/hy/os-update.sh --check-boot-media
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

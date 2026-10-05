@@ -1,0 +1,56 @@
+#!/bin/sh
+# shellcheck disable=SC2013
+
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mount -t devtmpfs devtmpfs /dev
+
+root_label=""
+for arg in $(cat /proc/cmdline); do
+	case "$arg" in
+		root=PARTLABEL=*) root_label="${arg#root=PARTLABEL=}" ;;
+	esac
+done
+
+DATA_LABEL="data"
+DATA_DEV=""
+case "$root_label" in
+	live*)
+		;;
+	*)
+		i=0
+		while [ -z "$DATA_DEV" ] && [ "$i" -lt 120 ]; do
+			for u in /sys/class/block/*/uevent; do
+				if grep -q "^PARTNAME=${DATA_LABEL}$" "$u" 2>/dev/null; then
+					DATA_DEV="/dev/$(basename "$(dirname "$u")")"
+					break
+				fi
+			done
+			[ -n "$DATA_DEV" ] && break
+			i=$((i + 1))
+			[ $((i % 10)) -eq 0 ] && echo "hyperchromia-init-overlay: still waiting for DATA partition (PARTLABEL=$DATA_LABEL) after ${i}s..." > /dev/console
+			sleep 1
+		done
+		;;
+esac
+
+if [ -n "$DATA_DEV" ] && mount "$DATA_DEV" /data 2>/dev/null; then
+	echo "hyperchromia-init-overlay: DATA partition found at $DATA_DEV" > /dev/console
+	for d in etc var/lib; do
+		slug=$(echo "$d" | tr / -)
+		mkdir -p "/data/.overlay/$slug/upper" "/data/.overlay/$slug/work"
+		mount -t overlay overlay \
+			-o "lowerdir=/$d,upperdir=/data/.overlay/$slug/upper,workdir=/data/.overlay/$slug/work" \
+			"/$d" 2>/dev/null || echo "hyperchromia-init-overlay: overlay mount for /$d failed" > /dev/console
+	done
+else
+	echo "hyperchromia-init-overlay: DATA partition (PARTLABEL=$DATA_LABEL) not found; /etc and /var/lib stay read-only" > /dev/console
+fi
+
+[ -s /etc/hostname ] && hostname "$(cat /etc/hostname)" 2>/dev/null
+
+umount /dev 2>/dev/null
+umount /sys 2>/dev/null
+umount /proc 2>/dev/null
+
+exec /sbin/init

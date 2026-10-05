@@ -1,0 +1,12 @@
+[Unit]
+Description=Confirm this boot is healthy and clear the GRUB retry counter
+After=hyperhdr.service
+Wants=hyperhdr.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/share/hyperchromia/boot-confirm.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
