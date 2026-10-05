@@ -1,0 +1,47 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "baseBranchPatterns": ["develop"],
+  "semanticCommits": "enabled",
+  "semanticCommitScope": "",
+  "commitMessageAction": "bump",
+  "commitMessageTopic": "{{depName}}",
+  "commitMessageExtra": "to {{newValue}}",
+  "git-submodules": {
+    "enabled": false
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["^config\\.env$", "^README\\.md$"],
+      "matchStrings": [
+        "HYPERHDR_DEFAULT_VERSION=(?<currentValue>\\S+)",
+        "HyperHDR-(?<currentValue>v[0-9.]+)-blue"
+      ],
+      "depNameTemplate": "awawa-dev/HyperHDR",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["^scripts/build\\.sh$", "^README\\.md$"],
+      "matchStrings": [
+        "BUILDROOT_TAG=(?<currentValue>\\S+)",
+        "Buildroot-(?<currentValue>\\d{4}\\.\\d{2}(?:\\.\\d+)?)-blue"
+      ],
+      "depNameTemplate": "buildroot/buildroot",
+      "datasourceTemplate": "github-tags",
+      "versioningTemplate": "loose",
+      "extractVersionTemplate": "^(?<version>\\d{4}\\.\\d{2}(\\.\\d+)?)$"
+    }
+  ],
+  "packageRules": [
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "github-actions"
+    },
+    {
+      "matchDepNames": ["buildroot/buildroot"],
+      "prBodyNotes": ["- [ ] Verified with a local build before merging"]
+    }
+  ]
+}
