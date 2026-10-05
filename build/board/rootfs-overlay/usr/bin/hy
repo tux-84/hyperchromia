@@ -1,0 +1,97 @@
+#!/bin/bash
+
+HY_LIB_DIR="/usr/lib/hy"
+source "$HY_LIB_DIR/common.sh"
+
+hy_usage() {
+    cat <<'EOF'
+Usage: hy <command> [args]
+
+Commands:
+  help          Show this help message
+  restart       Restart the hyperhdr service
+  net           Show network diagnostics (read-only)
+  netconfig     Interactively change network settings (DHCP/static/hostname/Wi-Fi)
+  netconfig wifi on|off|connect <ssid> [password]   Non-interactive Wi-Fi control
+  reboot        Reboot the system
+  poweroff      Power off the system
+  backup        Create a backup archive of the HyperHDR install
+  restore       Restore from a backup archive
+  upgrade       Check for and install HyperHDR updates
+  factoryreset  Wipe HyperHDR back to factory defaults (destructive)
+  password      Change the root password
+  mqtt          Configure the MQTT bridge (Home Assistant)
+  locale        Try/set the console keyboard layout
+  status        Show HyperHDR and LED device on/off state
+  setup         Re-run the first-boot setup wizard (locale/network/password/mqtt)
+EOF
+}
+
+cmd="$1"
+[ $# -gt 0 ] && shift
+
+case "$cmd" in
+    ""|help|-h|--help)
+        hy_usage
+        ;;
+    restart)
+source "$HY_LIB_DIR/restart.sh"
+        hy_cmd_restart "$@"
+        ;;
+    net)
+source "$HY_LIB_DIR/net.sh"
+        hy_cmd_net "$@"
+        ;;
+    netconfig)
+source "$HY_LIB_DIR/netconfig.sh"
+        hy_cmd_netconfig "$@"
+        ;;
+    reboot)
+        systemctl reboot
+        ;;
+    poweroff)
+        systemctl poweroff
+        ;;
+    backup)
+source "$HY_LIB_DIR/backup.sh"
+        hy_cmd_backup "$@"
+        ;;
+    restore)
+source "$HY_LIB_DIR/restore.sh"
+        hy_cmd_restore "$@"
+        ;;
+    upgrade)
+source "$HY_LIB_DIR/upgrade.sh"
+        hy_cmd_upgrade "$@"
+        ;;
+    factoryreset)
+source "$HY_LIB_DIR/factoryreset.sh"
+        hy_cmd_factoryreset "$@"
+        ;;
+    password)
+source "$HY_LIB_DIR/password.sh"
+        hy_cmd_password "$@"
+        ;;
+    mqtt)
+source "$HY_LIB_DIR/mqtt.sh"
+        hy_cmd_mqtt "$@"
+        ;;
+    locale)
+source "$HY_LIB_DIR/locale.sh"
+        hy_cmd_locale "$@"
+        ;;
+    status)
+source "$HY_LIB_DIR/status.sh"
+        hy_cmd_status "$@"
+        ;;
+    setup)
+source "$HY_LIB_DIR/firstboot.sh"
+        rm -f "$HY_OS_STATE_DIR/firstboot-done"
+        hy_cmd_firstboot "$@"
+        ;;
+    *)
+        echo "hy: unknown command '$cmd'" >&2
+        hy_usage >&2
+        exit 1
+        ;;
+esac
