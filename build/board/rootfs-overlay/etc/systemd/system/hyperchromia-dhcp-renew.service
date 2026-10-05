@@ -1,0 +1,12 @@
+[Unit]
+Description=Force a fresh DHCP lease so the hostname option registers correctly
+After=connman.service
+Wants=connman.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/share/hyperchromia/dhcp-renew.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
