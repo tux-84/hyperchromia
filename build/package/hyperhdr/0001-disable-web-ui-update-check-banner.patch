@@ -1,0 +1,33 @@
+Disable the web UI's update-check banner
+
+HyperHDR's dashboard calls the GitHub Releases API straight from the
+browser (www/js/overview.js) to show a "newer version available" banner
+with a link to the GitHub release. It's entirely client-side JS with no
+daemon/CMake involvement and takes no action on its own (confirmed: no
+self-update logic exists anywhere in the codebase), but on HyperChromia it
+would be misleading -- upgrades here are handled by `hy upgrade`, not
+anything this banner points at.
+
+--- a/www/js/overview.js
++++ b/www/js/overview.js
+@@ -380,19 +380,7 @@
+ 	$('#dash_currv').html(window.currentVersion);
+ 	$('#dash_instance').html(window.currentHyperHdrInstanceName);
+
+-	getReleases(function (callback)
+-	{
+-		if (callback)
+-		{
+-			$('#dash_latev').html(window.latestVersion.tag_name);
+-
+-			if (compareHyperHdrVersion(window.latestVersion.tag_name, window.currentVersion))
+-				$('#versioninforesult').html('<div class="callout callout-warning" style="margin:0px"><a target="_blank" href="' + window.latestVersion.html_url + '">' + $.i18n('dashboard_infobox_message_updatewarning', window.latestVersion.tag_name) + '</a></div>');
+-			else
+-				$('#versioninforesult').html('<div class="callout callout-success" style="margin:0px">' + $.i18n('dashboard_infobox_message_updatesuccess') + '</div>');
+-
+-		}
+-	});
++	// HyperChromia: update-check banner disabled -- HyperChromia manages upgrades via `hy upgrade`.
+
+
+ 	//determine platform
