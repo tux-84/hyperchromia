@@ -1,0 +1,13 @@
+[Unit]
+Description=Check for removable install media and install HyperChromia onto an internal disk
+After=systemd-udevd.service local-fs.target
+Before=hyperchromia-update-check.service hyperhdr.service hyperchromia-seed-data.service getty@tty1.service serial-getty@ttyS0.service
+
+[Service]
+Type=oneshot
+ExecStartPre=/usr/bin/udevadm settle --timeout=15
+ExecStart=/usr/share/hyperchromia/installer.sh --check-boot-media
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
