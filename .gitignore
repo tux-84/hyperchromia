@@ -1,0 +1,23 @@
+# Build artifacts
+*.img
+*.raw
+build.log
+
+# Transient firstboot preseed staging file (make-usb.sh -> build.sh) -- carries a plaintext
+# root password briefly during a build, never meant to be committed.
+build/.preseed-firstboot.conf
+
+# Personal SSH key baked in for your own builds only -- never ship a real
+# key as the default root credential in a public repo. Drop your own
+# authorized_keys here locally; it stays untracked.
+/authorized_keys
+build/.authorized_keys
+
+# macOS
+.DS_Store
+
+# Editors
+.idea/
+*.swp
+*.swo
+*~
