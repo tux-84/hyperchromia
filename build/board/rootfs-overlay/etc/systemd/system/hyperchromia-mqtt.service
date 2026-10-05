@@ -1,0 +1,13 @@
+[Unit]
+Description=HyperChromia MQTT bridge for Home Assistant
+After=network.target
+ConditionPathExists=/etc/hyperchromia/.mqtt-configured
+
+[Service]
+Type=simple
+ExecStart=/usr/share/hyperchromia/mqtt-bridge.sh
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
