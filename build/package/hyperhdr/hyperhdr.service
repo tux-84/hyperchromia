@@ -1,0 +1,15 @@
+[Unit]
+Description=HyperHDR ambient lighting daemon
+After=network.target hyperchromia-seed-data.service
+Requires=hyperchromia-seed-data.service
+
+[Service]
+Type=simple
+Environment=HOME=/data/hyperhdr
+Environment=LD_LIBRARY_PATH=/data/hyperhdr/lib/hyperhdr:/data/hyperhdr/lib/hyperhdr/external
+ExecStart=/data/hyperhdr/bin/hyperhdr
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

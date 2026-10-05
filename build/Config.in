@@ -1,0 +1,1 @@
+source "$BR2_EXTERNAL_HYPERHDR_PATH/package/hyperhdr/Config.in"
