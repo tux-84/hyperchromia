@@ -1,0 +1,12 @@
+[Unit]
+Description=Seed /data/hyperhdr from the factory-default copy on SYSTEM
+RequiresMountsFor=/data
+Before=hyperhdr.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/share/hyperchromia/seed-data.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
