@@ -1,0 +1,22 @@
+name: Build (self-hosted)
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [master]
+permissions:
+  contents: read
+concurrency:
+  group: build-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+jobs:
+  build:
+    if: github.actor == 'tux-84'
+    environment: manual-build
+    runs-on: [self-hosted, macOS]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build factory.img / update.img
+        env:
+          HY_CONTAINER_CHOICE: scratch
+          HY_CI_CLEANUP: "1"
+        run: scripts/build.sh
