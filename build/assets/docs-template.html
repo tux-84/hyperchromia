@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}} — HyperChromia docs</title>
+<link rel="icon" href="assets/favicon.png">
+<link rel="stylesheet" href="assets/docs.css">
+</head>
+<body>
+<button id="nav-toggle" class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">&#9776;</button>
+<button id="theme-toggle" class="theme-toggle" aria-label="Toggle light/dark theme">&#9788;</button>
+<div class="layout">
+<nav id="sidebar" class="sidebar">
+<a class="logo-link" href="index.html">
+<img src="assets/logo.png" width="40" height="40" alt="HyperChromia logo">
+<span>HyperChromia</span>
+</a>
+<ul>
+{{NAV}}
+</ul>
+</nav>
+<main class="content">
+<article>
+{{CONTENT}}
+</article>
+<footer class="page-footer">Last updated: {{LAST_UPDATED}}</footer>
+</main>
+</div>
+<script>
+(function () {
+  var root = document.documentElement;
+  var stored = null;
+  try { stored = localStorage.getItem('hy-docs-theme'); } catch (e) {}
+  if (stored) root.setAttribute('data-theme', stored);
+  document.getElementById('theme-toggle').addEventListener('click', function () {
+    var current = root.getAttribute('data-theme') ||
+      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    var next = current === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('hy-docs-theme', next); } catch (e) {}
+  });
+  document.getElementById('nav-toggle').addEventListener('click', function () {
+    var sidebar = document.getElementById('sidebar');
+    var open = sidebar.classList.toggle('open');
+    this.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+})();
+</script>
+</body>
+</html>

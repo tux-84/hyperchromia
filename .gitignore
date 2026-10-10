@@ -3,6 +3,9 @@
 *.raw
 build.log
 
+# Generated docs site (built by scripts/build-docs.sh / .github/workflows/pages.yml)
+/site/
+
 # Transient firstboot preseed staging file (make-usb.sh -> build.sh) -- carries a plaintext
 # root password briefly during a build, never meant to be committed.
 build/.preseed-firstboot.conf
