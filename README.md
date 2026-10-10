@@ -12,6 +12,8 @@ built on Buildroot.
 
 <br clear="left"/>
 
+![HyperChromia branded console](build/assets/console-screenshot.png)
+
 ## Features
 
 - **Read-only root.** SquashFS `SYSTEM` partition + a writable `DATA` partition for
