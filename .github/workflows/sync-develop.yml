@@ -1,0 +1,21 @@
+name: Sync develop onto master
+on:
+  push:
+    branches: [master]
+permissions:
+  contents: write
+jobs:
+  rebase:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: develop
+          fetch-depth: 0
+      - name: Rebase develop onto master
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rebase origin/master
+      - name: Push
+        run: git push --force-with-lease origin develop
