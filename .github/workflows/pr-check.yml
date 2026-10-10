@@ -1,7 +1,6 @@
 name: PR Check
 on:
-  pull_request:
-    branches: [master, develop]
+  pull_request: {}
 permissions:
   contents: read
 jobs:
