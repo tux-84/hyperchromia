@@ -9,7 +9,8 @@ TEMPLATE="$ASSETS_DIR/docs-template.html"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 
-rm -rf "$SITE_DIR"
+mkdir -p "$SITE_DIR"
+find "$SITE_DIR" -mindepth 1 -delete
 mkdir -p "$SITE_DIR/assets"
 cp "$ASSETS_DIR/logo.png" "$SITE_DIR/assets/logo.png"
 cp "$ASSETS_DIR/logo.png" "$SITE_DIR/assets/favicon.png"
