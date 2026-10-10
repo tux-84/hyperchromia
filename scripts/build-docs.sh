@@ -32,6 +32,7 @@ hy_title_for() {
 }
 
 : > "$WORK_DIR/nav-lines.txt"
+printf '%s\t%s\n' "index" "Table of Contents" >> "$WORK_DIR/nav-lines.txt"
 for entry in "${SOURCES[@]}"; do
   src="${entry%%:*}"
   slug="${entry##*:}"
@@ -49,6 +50,7 @@ hy_write_nav() {
   done < "$WORK_DIR/nav-lines.txt"
 }
 
+TOC_ARGS=()
 for entry in "${SOURCES[@]}"; do
   src="${entry%%:*}"
   slug="${entry##*:}"
@@ -56,14 +58,20 @@ for entry in "${SOURCES[@]}"; do
   last_updated="$(git -C "$HYPERCHROMIA_DIR" log -1 --format=%ad --date=short -- "$src")"
   [ -z "$last_updated" ] && last_updated="$(date +%Y-%m-%d)"
 
-  pandoc --from gfm --to html5 "$src" -o "$WORK_DIR/content.html"
+  pandoc --from gfm --to html5 "$src" -o "$WORK_DIR/content-$slug.html"
   hy_write_nav "$slug" "$WORK_DIR/nav.html"
 
   python3 "$HYPERCHROMIA_DIR/scripts/build-docs-page.py" \
-    "$TEMPLATE" "$WORK_DIR/nav.html" "$WORK_DIR/content.html" \
+    "$TEMPLATE" "$WORK_DIR/nav.html" "$WORK_DIR/content-$slug.html" \
     "$title" "$last_updated" "$SITE_DIR/$slug.html"
 
-  [ "$slug" = "features" ] && cp "$SITE_DIR/$slug.html" "$SITE_DIR/index.html"
+  TOC_ARGS+=("$slug:$title:$WORK_DIR/content-$slug.html")
 done
+
+python3 "$HYPERCHROMIA_DIR/scripts/build-full-toc.py" "${TOC_ARGS[@]}" > "$WORK_DIR/toc-content.html"
+hy_write_nav "index" "$WORK_DIR/nav.html"
+python3 "$HYPERCHROMIA_DIR/scripts/build-docs-page.py" \
+  "$TEMPLATE" "$WORK_DIR/nav.html" "$WORK_DIR/toc-content.html" \
+  "Table of Contents" "$(date +%Y-%m-%d)" "$SITE_DIR/index.html"
 
 echo "==> Built site/ ($(find "$SITE_DIR" -maxdepth 1 -name '*.html' | wc -l | tr -d ' ') pages)"
