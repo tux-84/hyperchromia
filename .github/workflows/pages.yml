@@ -1,0 +1,36 @@
+name: Deploy docs site
+on:
+  push:
+    branches: [master]
+    paths:
+      - docs/**
+      - CHANGELOG.md
+      - scripts/build-docs.sh
+      - scripts/build-docs-page.py
+      - build/assets/docs-template.html
+      - build/assets/docs.css
+      - build/assets/logo.png
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: sudo apt-get update && sudo apt-get install -y pandoc
+      - run: scripts/build-docs.sh
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
